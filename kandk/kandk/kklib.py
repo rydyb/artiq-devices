@@ -76,14 +76,15 @@ version date        description
                         get_kk_report
 2.1     2025-06-03  KK-Library min version 21.1.0
                     added optional parameter format_fxe in open_TCP_log*
+2.2     2025-08-07  KK-Library min version 21.2.0
+                    added set_server_ip_for_peer
 """
 from builtins import str
 
 __all__ = ['NativeLib', 'NativeLibError', 'ErrorCode', 'KK_Result', 'DebugLogType', 'FHRData', 'FHRSettings', \
            'KK_ReportType', 'KK_Report', 'Phase']
-__version__ = '2.1'
+__version__ = '2.2'
 
-import os
 import ctypes
 from ctypes import c_bool, c_byte, c_char, c_char_p, c_double, c_int32, c_int64, \
     c_uint, c_uint16, c_uint32, \
@@ -94,6 +95,7 @@ import math
 import platform
 import struct
 import sys
+from typing import Self
 
 
 #-------------------------------------------------------------------------
@@ -482,7 +484,7 @@ class Phase:
         self.Low = aLow
 
     @classmethod
-    def from_float(cls, aFloat: float):
+    def from_float(cls, aFloat: float) -> Self:
         aHigh = math.trunc(aFloat)
         aLow = aFloat - aHigh
         return cls(aHigh, aLow)
@@ -1029,30 +1031,31 @@ class NativeLib:
             raise NativeLibError("Unsupported platform: "+platform.system())
         else:
             self._libpath = os.path.join(os.path.dirname(__file__), self._libname)
+
             try:
                 if platform.system() == "Windows":
                     # library exports functions as stdcall -> use ctypes.windll
-                    return ctypes.windll.LoadLibrary(self._libpath)
+                    return ctypes.windll.LoadLibrary(self._libname)
                 else:
                     # library exports functions as cdecl -> use ctypes.cdll
-                    return ctypes.cdll.LoadLibrary(self._libpath)
+                    return ctypes.cdll.LoadLibrary(self._libname)
             except OSError as exc:
-                raise NativeLibError("loading K+K library ("+self._libpath
+                raise NativeLibError("loading K+K library ("+self._libname
                                      +") failed: "+str(exc))
 
     # class init
     def __init__(self):
         self._kkdll = self._load_library()
-        # check version minimum 21.0.0 required
+        # check version minimum 21.2.0 required
         version = self.get_version()
-        errorVersion = "Invalid version "+version+", needs 21.1.0"
+        errorVersion = "Invalid version "+version+", needs 21.2.0"
         subVersion = version
         indexdot = subVersion.find('.')
         if indexdot < 0:
             verNum = int(subVersion)
         else:
             verNum = int(subVersion[:indexdot])
-        if verNum < 20:
+        if verNum < 21:
             raise NativeLibError(errorVersion)
         doCheck = (verNum == 21)
         if doCheck:
@@ -1062,7 +1065,7 @@ class NativeLib:
                 verNum = int(subVersion)
             else:
                 verNum = int(subVersion[:indexdot])
-            if verNum < 1:
+            if verNum < 2:
                 raise NativeLibError(errorVersion)
             #doCheck = (verNum == 2)
             doCheck = False
@@ -1698,6 +1701,30 @@ class NativeLib:
         id_ = c_int32(source_id)
         self._kkdll.Multi_CloseConnection(id_)
 
+    def set_server_ip_for_peer(self, source_id: int, ip_str: str) -> KK_Result:
+        id_ = c_int32(source_id)
+        ip = ip_str.encode('ascii')
+        # ip needs 1024 byte buffer
+        for i in range(len(ip)):
+            self._buffer[i] = ip[i]
+        # append terminating 0
+        self._buffer[len(ip)] = 0
+        # mutable variable needed
+        char_array = ctypes.c_char * len(self._buffer)
+        kkres = KK_Result()
+        retI = c_int32(self._kkdll.Multi_SetServerIPforPeer(
+                id_, char_array.from_buffer(self._buffer)))
+        if retI.value != 1:
+            # buffer contains error message
+            kkres.data = bytearray2string(self._buffer)
+            if retI.value == 10:
+                kkres.result_code = ErrorCode.KK_PARAM_ERROR
+            elif retI.value == 15:
+                kkres.result_code = ErrorCode.KK_DLL_EXCEPTION
+            else:
+                kkres.result_code = ErrorCode.KK_ERR
+
+        return kkres
 
     #-------------------------------------------------------------------------
     # Get report

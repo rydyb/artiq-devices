@@ -6,8 +6,9 @@ CMD_FREQ_AVG = bytes([0x43])
 CMD_RATE_1S = bytes([0x29])
 
 class FrequencyCounter:
-    def __init__(self, remote_host: str, channels: int, timeout: float = 10.0, interval: float = 0.1, data_port: int = 48896):
-        self.host = remote_host
+    def __init__(self, device_host: str, peer_host: str, channels: int, timeout: float = 10.0, interval: float = 0.1, data_port: int = 48896):
+        self.device_host = device_host
+        self.peer_host = peer_host
         self.data_port = 48896
         self.channels = channels
         self.timeout = timeout
@@ -24,8 +25,13 @@ class FrequencyCounter:
         logging.debug(f"received source id: {self._sid}")
         port = self.data_port
 
-        logging.debug(f"opening connection to {self.host} via data port {self.data_port}")
-        result = self._lib.open_connection(self._sid, f"{self.host}:{port}", False)
+        logging.debug(f"setting server ip for peer to {self.peer_host} via data port {self.data_port}")
+        result = self._lib.set_server_ip_for_peer(self._sid, self.peer_host)
+        if result.result_code != ErrorCode.KK_NO_ERR:
+            raise RuntimeError(f"Error setting peer ip: {result.data}")
+
+        logging.debug(f"opening connection to {self.device_host} via {self.peer_host}:{self.data_port}")
+        result = self._lib.open_connection(self._sid, f"{self.device_host}:{port}", False)
         if result.result_code != ErrorCode.KK_NO_ERR:
             raise RuntimeError(f"Error opening connection: {result.data}")
 
