@@ -1,5 +1,4 @@
 import json
-import numpy as np
 import argparse
 import logging
 import spectrum_instruments.driver as driver

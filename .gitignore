@@ -1,4 +1,5 @@
 build
 *.egg-info
 .venv
+.ropeproject
 __pycache__

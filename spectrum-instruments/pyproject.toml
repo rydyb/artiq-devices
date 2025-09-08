@@ -1,11 +1,11 @@
 [project]
 name = "spectrum_instruments"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     { name = "Bodo Kaiser", email = "bodo.kaiser@physik.uni-muenchen.de" }
 ]
 dependencies = [
-    "spcm==1.9.1",
+    "spcm==1.10.0",
     "numpy==2.3.2",
     "sipyco @ git+https://github.com/m-labs/sipyco.git@v1.9"
 ]
