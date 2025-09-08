@@ -1,9 +1,12 @@
 import json
 import argparse
 import logging
-import spectrum_instruments.driver as driver
+
 from sipyco.pc_rpc import simple_server_loop
 from sipyco import common_args
+
+import spectrum_instruments.driver as driver
+
 
 
 def add_common_args(parser):
@@ -31,6 +34,7 @@ def get_argparser():
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparser_list = subparsers.add_parser("list")
+    subparser_list.add_argument("--debug", action="store_true")
     subparser_list.add_argument(
         "-o", "--output", choices=["json"], default="json", help="Output format"
     )

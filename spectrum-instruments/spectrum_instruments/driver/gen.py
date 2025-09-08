@@ -6,8 +6,8 @@ class SignalGenerator:
     def __init__(
         self,
         serial_number: int,
-        output_load: float,
         output_voltage: float,
+        output_load: float = 50.0,
         verbose: bool = False,
     ):
         self.card = spcm.Card(serial_number=serial_number, verbose=verbose).open()
@@ -22,10 +22,10 @@ class SignalGenerator:
             self.card.loops(0)
             logging.info("Set SPC_LOOPS to 0")
 
-            self.channel0 = spcm.Channels(self.card, spcm.CHANNEL0 | spcm.CHANNEL1)
-            self.channel0.enable(True)
-            self.channel0.output_load(self.output_load * spcm.units.ohm)
-            self.channel0.amp(self.output_voltage * spcm.units.V)
+            self.channels = spcm.Channels(self.card, spcm.CHANNEL0 | spcm.CHANNEL1)
+            self.channels.enable(True)
+            self.channels.output_load(self.output_load * spcm.units.ohm)
+            self.channels.amp(self.output_voltage * spcm.units.V)
             logging.info(
                 "Enabled channel 0 with output voltage %s V at 50 Ohm", output_voltage
             )

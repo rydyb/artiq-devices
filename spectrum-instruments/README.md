@@ -105,3 +105,12 @@ class RydbergExperiment(EnvExperiment):
             self.ttl0.pulse(10 * us)
             self.ttl1.pulse(10 * us)
 ```
+
+## Develop
+
+```shell
+cd spectrum_instruments
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
