@@ -5,7 +5,8 @@ from .driver import (
     Command,
     ConstCommand,
     RampCommand,
-    TriggerCommand,
+    InternalTriggerCommand,
+    ExternalTriggerCommand,
 )
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "Command",
     "ConstCommand",
     "RampCommand",
-    "TriggerCommand",
+    "InternalTriggerCommand",
+    "ExternalTriggerCommand",
 ]

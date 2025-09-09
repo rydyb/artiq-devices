@@ -15,6 +15,10 @@ class AWG(SignalGenerator):
         self.sample_rate = sample_rate
 
         try:
+            self.card.timeout(10 * spcm.units.s)
+            self.card.loops(0)
+            logging.info("Set SPC_LOOPS to 0")
+
             self.clock = spcm.Clock(self.card)
             self.clock.sample_rate(sample_rate * spcm.units.Hz)
             self.clock.clock_output(False)
@@ -46,8 +50,9 @@ class AWG(SignalGenerator):
         )
         logging.info("Started buffer transfer with %s samples", len(samples))
 
-    def start_triggered_playback(self):
+    def start_external_triggered_playback(self):
         super().start_triggered_playback()
+
         self.card.card_mode(spcm.SPC_REP_STD_SINGLERESTART)
         self.card.start(spcm.M2CMD_CARD_ENABLETRIGGER, spcm.M2CMD_CARD_FORCETRIGGER)
         logging.info("Card set to single restart mode and trigger enabled")

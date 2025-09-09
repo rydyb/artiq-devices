@@ -18,10 +18,6 @@ class SignalGenerator:
         self.output_voltage = output_voltage
 
         try:
-            self.card.timeout(10 * spcm.units.s)
-            self.card.loops(0)
-            logging.info("Set SPC_LOOPS to 0")
-
             self.channels = spcm.Channels(self.card, spcm.CHANNEL0 | spcm.CHANNEL1)
             self.channels.enable(True)
             self.channels.output_load(self.output_load * spcm.units.ohm)
@@ -30,7 +26,7 @@ class SignalGenerator:
                 "Enabled channel 0 with output voltage %s V at 50 Ohm", output_voltage
             )
 
-            self.trigger = spcm.Trigger(self.card)
+            self.trigger = spcm.Trigger(self.card, channels=self.channels)
         except spcm.SpcmException as error:
             logging.error("Error during initialization: %s", str(error))
             self.card.close()
@@ -44,7 +40,7 @@ class SignalGenerator:
         self.trigger = None
         logging.info("Closed card handle")
 
-    def start_triggered_playback(self):
+    def arm_external_trigger(self):
         self.trigger.termination(0)
         self.trigger.or_mask(spcm.SPC_TMASK_EXT0)
         self.trigger.ext0_mode(spcm.SPC_TM_POS)
@@ -52,6 +48,14 @@ class SignalGenerator:
         self.trigger.ext0_level0(1 * spcm.units.V)
         logging.info("Configured external trigger with positive edge detection at 1 V")
 
-        self.card.card_mode(spcm.SPC_REP_STD_SINGLERESTART)
         self.card.start(spcm.M2CMD_CARD_ENABLETRIGGER, spcm.M2CMD_CARD_FORCETRIGGER)
-        logging.info("Card set to single restart mode and trigger enabled")
+
+    def arm_internal_trigger(self):
+        self.trigger.or_mask(spcm.SPC_TM_NONE)
+        logging.info("Configured internal trigger")
+
+        self.card.start(spcm.M2CMD_CARD_ENABLETRIGGER, spcm.M2CMD_CARD_FORCETRIGGER)
+
+    def force_internal_trigger(self):
+        self.trigger.force()
+        logging.info("Triggered internal trigger")
