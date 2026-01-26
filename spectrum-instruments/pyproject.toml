@@ -6,6 +6,6 @@ authors = [
 ]
 dependencies = [
     "spcm==1.9.1",
-    "numpy==2.3.2",
+    "numpy~=2.0",
     "sipyco @ git+https://github.com/m-labs/sipyco.git@v1.9"
 ]
